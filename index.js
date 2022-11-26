@@ -75,6 +75,12 @@ async function run() {
             const bookings = await bookingCollection.find(query).toArray();
             res.send(bookings);
         });
+        app.get('/products',  async (req, res) => {
+            const email = req.query.email;
+            const query = { sellerEmail: email };
+            const products = await productCollection.find(query).toArray();
+            res.send(products);
+        });
         app.get('/products/:name', async (req, res) => {
             const category = req.params.name;
             const query = { categoryName: category }
