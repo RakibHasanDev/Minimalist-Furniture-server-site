@@ -17,6 +17,8 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 const usersCollection = client.db('minimalFurniture').collection('users');
+const productCollection = client.db('minimalFurniture').collection('products');
+ const categoryCollection = client.db('minimalFurniture').collection('categoryCollection');
 
 async function run() {
 
@@ -48,6 +50,39 @@ async function run() {
             res.send(result)
             // console.log(email)
             // console.log(data)
+        });
+        app.get('/users', async (req, res) => {
+            const query = {};
+            const users = await usersCollection.find(query).toArray();
+            res.send(users);
+        });
+        app.get('/categories', async (req, res) => {
+            const query = {};
+            const categories = await categoryCollection.find(query).toArray();
+            res.send(categories);
+        });
+
+        app.get('/users/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollection.findOne(query);
+            res.send({ isSeller: user?.role === 'Seller' });
+        });
+        app.post("/products", async (req, res) => {
+            const product = req.body;
+            // console.log(product);
+            const result = await productCollection.insertOne(product);
+            res.send(result);
+        });
+
+       
+        app.get('/products/:name', async (req, res) => {
+            const category = req.params.name;
+            const query = { categoryName: category }
+            const data = productCollection.find(query)
+            const result = await data.toArray()
+            // console.log(category)
+            res.send(result)
         })
         
     }
@@ -61,7 +96,7 @@ async function run() {
 
 run().catch(console.log);
 
-console.log(uri)
+// console.log(uri)
 
 
 
