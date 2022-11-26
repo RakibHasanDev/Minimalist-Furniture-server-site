@@ -19,6 +19,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 const usersCollection = client.db('minimalFurniture').collection('users');
 const productCollection = client.db('minimalFurniture').collection('products');
  const categoryCollection = client.db('minimalFurniture').collection('categoryCollection');
+ const bookingCollection = client.db('minimalFurniture').collection('bookings');
 
 async function run() {
 
@@ -68,14 +69,12 @@ async function run() {
             const user = await usersCollection.findOne(query);
             res.send({ isSeller: user?.role === 'Seller' });
         });
-        app.post("/products", async (req, res) => {
-            const product = req.body;
-            // console.log(product);
-            const result = await productCollection.insertOne(product);
-            res.send(result);
+        app.get('/bookings',  async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const bookings = await bookingCollection.find(query).toArray();
+            res.send(bookings);
         });
-
-       
         app.get('/products/:name', async (req, res) => {
             const category = req.params.name;
             const query = { categoryName: category }
@@ -83,7 +82,33 @@ async function run() {
             const result = await data.toArray()
             // console.log(category)
             res.send(result)
-        })
+        });
+        app.post("/products", async (req, res) => {
+            const product = req.body;
+            // console.log(product);
+            const result = await productCollection.insertOne(product);
+            res.send(result);
+        });
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            console.log(booking);
+           /* const query = {
+                appointmentDate: booking.appointmentDate,
+                email: booking.email,
+                treatment: booking.treatment
+            }
+
+            const alreadyBooked = await bookingsCollection.find(query).toArray();
+
+            if (alreadyBooked.length) {
+                const message = `You already have a booking on ${booking.appointmentDate}`
+                return res.send({ acknowledged: false, message })
+            }
+            */
+
+            const result = await bookingCollection.insertOne(booking);
+            res.send(result);
+        });
         
     }
 
