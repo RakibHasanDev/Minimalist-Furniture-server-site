@@ -57,6 +57,14 @@ async function run() {
             const users = await usersCollection.find(query).toArray();
             res.send(users);
         });
+        app.get('/allUsers/:role', async (req, res) => {
+            const role = req.params.role;
+            const query = { role: role };
+            const data = usersCollection.find(query)
+            const result = await data.toArray()
+            res.send(result);
+        });
+        
         app.get('/categories', async (req, res) => {
             const query = {};
             const categories = await categoryCollection.find(query).toArray();
