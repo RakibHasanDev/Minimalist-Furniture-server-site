@@ -20,17 +20,35 @@ const usersCollection = client.db('minimalFurniture').collection('users');
 const productCollection = client.db('minimalFurniture').collection('products');
  const categoryCollection = client.db('minimalFurniture').collection('categoryCollection');
  const bookingCollection = client.db('minimalFurniture').collection('bookings');
+ const reportCollection = client.db('minimalFurniture').collection('reports');
+ const advertiseCollection = client.db('minimalFurniture').collection('advertise');
 
 async function run() {
 
     try {
+
+        ///post user
         app.post('/users', async (req, res) => {
             const user = req.body;
             // console.log(user);
             const result = await usersCollection.insertOne(user);
             res.send(result);
         });
+
+        app.get('/advertise', async (req, res) => {
+            const query = {};
+            const advertises = await advertiseCollection.find(query).toArray();
+            res.send(advertises);
+        });
+        app.post('/advertise', async (req, res) => {
+            const data = req.body;
+            // console.log(user);
+            const result = await advertiseCollection.insertOne(data);
+            res.send(result);
+        });
+
         
+        // put user from google signin
 
         app.put('/users', async (req, res) => {
             const email = req.body.email;
@@ -52,11 +70,18 @@ async function run() {
             // console.log(email)
             // console.log(data)
         });
+
+        
+
+        // get users
+
         app.get('/users', async (req, res) => {
             const query = {};
             const users = await usersCollection.find(query).toArray();
             res.send(users);
         });
+
+        //users role
       
         app.get('/allUsers/:role', async (req, res) => {
             const role = req.params.role;
@@ -66,11 +91,15 @@ async function run() {
             res.send(result);
         });
         
+        //get category
+
         app.get('/categories', async (req, res) => {
             const query = {};
             const categories = await categoryCollection.find(query).toArray();
             res.send(categories);
         });
+
+        // get sellers by id
 
         app.get('/users/seller/:email', async (req, res) => {
             const email = req.params.email;
@@ -78,6 +107,9 @@ async function run() {
             const user = await usersCollection.findOne(query);
             res.send({ isSeller: user?.role === 'Seller' });
         });
+
+        // get admin
+
         app.get('/users/admin/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email }
@@ -131,6 +163,7 @@ async function run() {
             const result = await bookingCollection.insertOne(booking);
             res.send(result);
         });
+
         app.put('/users/verify/:id',  async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) }
@@ -143,6 +176,32 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updatedDoc, options);
             res.send(result);
         });
+      
+        // report start
+        // Add Report Product
+
+        app.post("/addReport", async (req, res) => {
+            const reportInfo = req.body;
+            // console.log(product);
+            const result = await reportCollection.insertOne(reportInfo);
+            res.send(result);
+        });
+
+        // Get Report
+        app.get("/allReports", async (req, res) => {
+            const query = {};
+            const result = await reportCollection.find(query).toArray();
+            res.send(result);
+        });
+        app.delete("/allReports/:id", async (req, res) => {
+            const id = req.params.id;
+            // console.log(id);
+            const query = { _id: ObjectId(id) };
+            const result = await reportCollection.deleteOne(query);
+            res.send(result);
+        });
+
+        // report end 
 
         app.delete("/products/:id", async (req, res) => {
             const id = req.params.id;
