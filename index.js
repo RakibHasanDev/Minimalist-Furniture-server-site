@@ -1,10 +1,17 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+// const stripe = require('stripe')( )
+
+
+const Stripe = require('stripe');
+const stripe = Stripe('sk_test_51M6W5jDE53oJG2ecFonI3qRl3nOK0tO6xiqqCIpboHklXHTBbSNDbee2Q5utqc3Ckp2CGpZQohlyuNS4MwnXmeJw009yDfw7FC');
+
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 const app = express();
 
+console.log(process.env.STRIPE_SECRET_KEY)
 
 // middleware
 app.use(cors());
@@ -22,12 +29,13 @@ const productCollection = client.db('minimalFurniture').collection('products');
  const bookingCollection = client.db('minimalFurniture').collection('bookings');
  const reportCollection = client.db('minimalFurniture').collection('reports');
  const advertiseCollection = client.db('minimalFurniture').collection('advertise');
+ const paymentCollection = client.db('minimalFurniture').collection('payments');
 
 async function run() {
 
     try {
 
-        ///post user
+      
         app.post('/users', async (req, res) => {
             const user = req.body;
             // console.log(user);
@@ -116,12 +124,15 @@ async function run() {
             const user = await usersCollection.findOne(query);
             res.send({ isAdmin: user?.role === 'Admin' });
         });
+
         app.get('/bookings',  async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
             const bookings = await bookingCollection.find(query).toArray();
             res.send(bookings);
         });
+
+  
         app.get('/products',  async (req, res) => {
             const email = req.query.email;
             const query = { sellerEmail: email };
@@ -217,6 +228,57 @@ async function run() {
             res.send(result);
 
         });
+
+        // /*  */
+
+        // Payments Orders
+        app.get("/orders/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const orders = await bookingCollection.findOne(query);
+            res.send(orders);
+        });
+
+        // create-payment-intent
+        app.post("/create-payment-intent", async (req, res) => {
+            const orders = req.body;
+            const price = orders.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: "usd",
+                amount: amount,
+                payment_method_types: ["card"],
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+
+        //payments
+        app.post("/payments", async (req, res) => {
+            const payment = req.body;
+            const result = await paymentCollection.insertOne(payment);
+            const id = payment.bookingId;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId,
+                },
+            };
+            const updatedResult = await bookingCollection.updateOne(
+                filter,
+                updatedDoc
+            );
+            res.send(result);
+        });
+
+
+
+
+
+        // /*  */
      
     }
 
