@@ -2,22 +2,19 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 // const stripe = require('stripe')( )
-
-
-const Stripe = require('stripe');
-const stripe = Stripe('sk_test_51M6W5jDE53oJG2ecFonI3qRl3nOK0tO6xiqqCIpboHklXHTBbSNDbee2Q5utqc3Ckp2CGpZQohlyuNS4MwnXmeJw009yDfw7FC');
-
 require('dotenv').config();
+const Stripe = require('stripe');
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
+
 const port = process.env.PORT || 5000;
 const app = express();
 
-console.log(process.env.STRIPE_SECRET_KEY)
+// console.log(process.env.STRIPE_SECRET_KEY)
 
 // middleware
 app.use(cors());
 app.use(express.json());
-
-
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.h32cfqq.mongodb.net/?retryWrites=true&w=majority`;
@@ -43,17 +40,7 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/advertise', async (req, res) => {
-            const query = {};
-            const advertises = await advertiseCollection.find(query).toArray();
-            res.send(advertises);
-        });
-        app.post('/advertise', async (req, res) => {
-            const data = req.body;
-            // console.log(user);
-            const result = await advertiseCollection.insertOne(data);
-            res.send(result);
-        });
+       
 
         
         // put user from google signin
@@ -89,6 +76,8 @@ async function run() {
             res.send(users);
         });
 
+     
+
         //users role
       
         app.get('/allUsers/:role', async (req, res) => {
@@ -98,7 +87,8 @@ async function run() {
             const result = await data.toArray()
             res.send(result);
         });
-        
+
+      
         //get category
 
         app.get('/categories', async (req, res) => {
@@ -148,6 +138,13 @@ async function run() {
             // console.log(category)
             res.send(result)
         });
+        app.get('/advertise/:advertise', async (req, res) => {
+            const advertise = req.params.advertise;
+            const query = { advertise: advertise };
+            const data = productCollection.find(query)
+            const result = await data.toArray()
+            res.send(result);
+        });
         app.post("/products", async (req, res) => {
             const product = req.body;
             // console.log(product);
@@ -156,20 +153,22 @@ async function run() {
         });
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
-            console.log(booking);
-           /* const query = {
-                appointmentDate: booking.appointmentDate,
-                email: booking.email,
-                treatment: booking.treatment
+            // console.log(booking);
+
+            
+            const query = {
+                productId: booking.productId,
+                email: booking.email
+                
             }
 
-            const alreadyBooked = await bookingsCollection.find(query).toArray();
+            const alreadyBooked = await bookingCollection.find(query).toArray();
 
             if (alreadyBooked.length) {
-                const message = `You already have a booking on ${booking.appointmentDate}`
+                const message = `You already have a booking for ${booking.ProductTitle}`
                 return res.send({ acknowledged: false, message })
             }
-            */
+            
 
             const result = await bookingCollection.insertOne(booking);
             res.send(result);
@@ -185,6 +184,18 @@ async function run() {
                 }
             }
             const result = await usersCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+        app.put('/products/advertise/:id',  async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    advertise: 'true'
+                }
+            }
+            const result = await productCollection.updateOne(filter, updatedDoc, options);
             res.send(result);
         });
       
@@ -274,7 +285,12 @@ async function run() {
             res.send(result);
         });
 
+        /*
+        const order = req.body;
+        const order = await orderCollection.updateOne(...);
+        const product = await productCollection.updateOne({ _id: ObjectId(order.productId) })
 
+        */
 
 
 
